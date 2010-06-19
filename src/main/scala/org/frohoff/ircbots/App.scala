@@ -10,11 +10,11 @@ import org.apache.lucene.search._
 import org.apache.lucene.store._
 import org.apache.lucene.util.{Version => Ver}
 
-/**
- * Hello world!
- *
- */
 object App extends Application {
+//	implicit def safe(qp:QuoteProvider) = new AnyRef {
+//		def quotesSafe = try { qp.quotes } catch { case e => println(e); Seq() }
+//	}
+
 	val dir = new RAMDirectory()
 	val writer = new IndexWriter(dir,
 		new StandardAnalyzer(Ver.LUCENE_30),
