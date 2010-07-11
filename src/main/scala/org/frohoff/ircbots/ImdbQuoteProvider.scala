@@ -9,6 +9,7 @@ import javax.xml.parsers._
 class ImdbQuoteProvider(id:String) extends QuoteProvider {
 	val client = new DefaultHttpClient
 	def quotes = {
+		println("fetching from imdb:" + id)
 		val response = client.execute(new HttpGet("http://www.imdb.com/title/" + id + "/quotes"))
 		val parser = SAXParserFactory.newInstance(classOf[SAXFactoryImpl].getName, getClass.getClassLoader).newSAXParser
 		val xml = XML.withSAXParser(parser).load(response.getEntity.getContent)

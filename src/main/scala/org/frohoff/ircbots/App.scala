@@ -11,29 +11,25 @@ import org.apache.lucene.store._
 import org.apache.lucene.util.{Version => Ver}
 
 object App extends Application {
-//	implicit def safe(qp:QuoteProvider) = new AnyRef {
-//		def quotesSafe = try { qp.quotes } catch { case e => println(e); Seq() }
-//	}
+	println("getting quotes")
 
-	val dir = new RAMDirectory()
-	val writer = new IndexWriter(dir,
-		new StandardAnalyzer(Ver.LUCENE_30),
-		IndexWriter.MaxFieldLength.LIMITED);
-
-	println("getting")
 	var quotes =
 		new TwitterQuoteProvider("shitmydadsays").quotes.map(x => x.copy(person="Dad", content=x.content.replaceAll(".*[\"“](.*)[\"”].*","$1"))) ++
 		new ImdbQuoteProvider("tt0118715").quotes ++ (
-			new TwitterQuoteProvider("chucknorrisbot").quotes ++
 			new TwitterQuoteProvider("tweetnorris").quotes.map(x => x.copy(content=x.content.replaceAll(".*[\"“](.*)[\"”].*http://.*","$1"))) ++
 			new TwitterQuoteProvider("FAKECHUCKNORRIS").quotes ++
 			new TwitterQuoteProvider("chuckfacts").quotes ++
 			new TwitterQuoteProvider("chucknorris_").quotes ++
 			new TwitterQuoteProvider("chuck_facts").quotes ++
-			new TwitterQuoteProvider("chuckthefacts").quotes.map(x => x.copy(content=x.content.replaceAll("(?i).*fact:\\s*(.*)","$1"))) )
-				.flatMap(x => if(x.content.contains("@") || x.content.contains("...")) None else Some(x))
-				.map(_.copy(person="Chuck Norris"))
+			new TwitterQuoteProvider("chuckthefacts").quotes
+				.map(x => x.copy(content=x.content.replaceAll("(?i).*fact:\\s*(.*)","$1"))))
+			.flatMap(x => if(x.content.contains("@") || x.content.contains("...")) None else Some(x))
+			.map(_.copy(person="Chuck Norris"))
 
+	val dir = new RAMDirectory()
+	val writer = new IndexWriter(dir,
+		new StandardAnalyzer(Ver.LUCENE_30),
+		IndexWriter.MaxFieldLength.LIMITED);
 
 	quotes.foreach{ x =>
 		writer.addDocument({val d = new Document()
@@ -43,10 +39,13 @@ object App extends Application {
 			d.add(new Field("content", x.content , Field.Store.YES, Field.Index.ANALYZED_NO_NORMS))
 			d })
 	}
+	writer.commit();
+
+    val searcher = new IndexSearcher(dir);
+
 	writer.optimize();
     writer.close();
 
-    val searcher = new IndexSearcher(dir);
     print(">")
 	Stream.continually(Console.readLine).foreach(line => {
 		val parser = new QueryParser(Ver.LUCENE_30,
